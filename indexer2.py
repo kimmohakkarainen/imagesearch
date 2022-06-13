@@ -11,7 +11,7 @@ def initDB():
         con2 = mariadb.connect(user='index', password='index', host='192.168.255.9', database='index')
         cur = con.cursor()
         cur.execute(
-            '''CREATE TABLE IF NOT EXISTS vgg19 (id integer PRIMARY KEY, predict TEXT, FOREIGN KEY(id) REFERENCES file(id))''')
+            '''CREATE TABLE IF NOT EXISTS vgg19 (id integer PRIMARY KEY, predict MEDIUMBLOB, FOREIGN KEY(id) REFERENCES file(id))''')
         con.commit()
         cur = con.cursor()
         cur.execute(
@@ -57,12 +57,17 @@ def main(con, con2):
         print(id)
         print(path)
         try:
-            image = tf.keras.preprocessing.image.load_img(path, target_size=(224,224))
+            #image = tf.keras.preprocessing.image.load_img(path, target_size=(224,224))
+            image = tf.keras.preprocessing.image.load_img(path)
+            try:
+                image = image.resize((224,224))
+            except:
+                image = image.resize((224,224), box=(0, 0, image.width, image.height))
             input_arr = keras.preprocessing.image.img_to_array(image)
             input_arr = np.array([input_arr])  # Convert single image to a batch.
             predictions = model.predict(input_arr)
             cur2 = con2.cursor()
-            cur2.execute('INSERT INTO vgg19(id, predict) VALUES(?, ?)',(id, adapt_array(predictions)))
+            cur2.execute('INSERT INTO vgg19(id, predict) VALUES(?, ?)',(id, predictions.dumps()))
             con2.commit()
             cur2.close()
         except Exception as exp:
