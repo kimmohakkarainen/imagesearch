@@ -6,7 +6,7 @@ def initDB():
         con = mariadb.connect(user='index', password='index', host='192.168.255.9', database='index')
         cur = con.cursor()
         cur.execute(
-            '''CREATE TABLE IF NOT EXISTS file (id integer PRIMARY KEY AUTO_INCREMENT, path char(255), name char(255))''')
+            '''CREATE TABLE IF NOT EXISTS file (id integer PRIMARY KEY AUTO_INCREMENT, path char(255), name char(255), unique(path,name)) ''')
         # cur.execute('''CREATE TABLE IF NOT EXISTS file (id integer PRIMARY KEY, path text UNIQUE, name text) WITHOUT ROWID''')
         con.commit()
         return con
@@ -21,7 +21,8 @@ def recurse(con, basepath):
         else:
             try:
                 cur = con.cursor()
-                cur.execute("INSERT INTO file (path, name)  VALUES (?,?)",(file.path, file.name))
+                #cur.execute("INSERT IGNORE INTO file (path, name)  VALUES (?,?)",(file.path, file.name))
+                cur.execute("INSERT IGNORE INTO file (path, name)  VALUES (?,?)",(basepath, file.name))
                 con.commit()
                 cur.close()
             except Exception as exp:
@@ -30,13 +31,10 @@ def recurse(con, basepath):
 
 
 
-basepath='\\\\192.168.255.9\\images'
+basepath='\\\\192.168.255.9\\tempimg'
 
 con = initDB()
 
-recurse(con, '\\\\192.168.255.9\\home')
-recurse(con, '\\\\192.168.255.9\\homes')
-recurse(con, '\\\\192.168.255.9\\images')
-recurse(con, '\\\\192.168.255.9\\incoming')
+recurse(con, basepath)
 
 con.close()

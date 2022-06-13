@@ -13,6 +13,10 @@ def initDB():
         cur.execute(
             '''CREATE TABLE IF NOT EXISTS vgg19 (id integer PRIMARY KEY, predict TEXT, FOREIGN KEY(id) REFERENCES file(id))''')
         con.commit()
+        cur = con.cursor()
+        cur.execute(
+            '''CREATE TABLE IF NOT EXISTS error (id integer PRIMARY KEY, error TEXT, FOREIGN KEY(id) REFERENCES file(id))''')
+        con.commit()
         return con, con2
     except Exception as ex:
         print(ex)
@@ -39,7 +43,7 @@ def main(con, con2):
     model = tf.keras.Model(inputs=conv_base.inputs, outputs=flat1)
 
     cur = con.cursor()
-    cur.execute('SELECT file.id, file.path FROM file LEFT JOIN vgg19 ON file.id = vgg19.id WHERE vgg19.id IS NULL ORDER BY name DESC')
+    cur.execute('SELECT file.id, file.path, file.name FROM file LEFT JOIN vgg19 ON file.id = vgg19.id LEFT JOIN error ON file.id = error.id WHERE vgg19.id IS NULL AND error.id IS NULL ORDER BY name DESC')
     #list = cur.fetchall()
     #cur.close()
 
@@ -48,7 +52,8 @@ def main(con, con2):
         row = cur.fetchone()
         if not row:
             break
-        (id, path) = row
+        (id, path,name) = row
+        path = path + '\\' + name
         print(id)
         print(path)
         try:
@@ -62,6 +67,10 @@ def main(con, con2):
             cur2.close()
         except Exception as exp:
             print(exp)
+            cur2 = con2.cursor()
+            cur2.execute('INSERT INTO error(id, error) VALUES(?, ?)', (id, str(exp)))
+            con2.commit()
+            cur2.close()
 
     cur.close()
 
