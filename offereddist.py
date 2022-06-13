@@ -25,7 +25,8 @@ def convert_array(text):
 def main(con, con2):
 
     cur = con.cursor()
-    cur.execute('SELECT file.id, file.path, file.name, vgg19.predict FROM file JOIN vgg19 ON file.id = vgg19.id ORDER BY name DESC')
+    cur.execute('SELECT file.id, file.path, file.name, vgg19.predict FROM file JOIN vgg19 ON file.id = vgg19.id ORDER BY file.path, file.name')
+    #cur.execute('SELECT id, path, name, predict FROM file_offered WHERE predict IS NOT NULL ORDER BY path, name')
 
     while True:
         row = cur.fetchone()
@@ -36,19 +37,19 @@ def main(con, con2):
         #predict1 = convert_array(pred)
 
         cur2 = con2.cursor()
-        cur2.execute('SELECT id, path, name, predict FROM file_offered')
+        cur2.execute('SELECT id, path, name, predict FROM file_offered WHERE predict IS NOT NULL ORDER BY path, name')
 
         while True:
             row2 = cur2.fetchone()
             if not row2:
                 break
             (id2, path2, name2, pred2) = row2
-            #predict2 = convert_array(pred2)
             predict2 = pickle.loads(pred2)
 
             similarity = tf.keras.metrics.CosineSimilarity()(y_true=predict1,y_pred=predict2)
-            sim = similarity.
-            print(name + ' <=> ' + name2 + ' ' + str(sim))
+            sim = similarity.numpy()
+            if sim > 0.5:
+                print(name + ' <=> ' + name2 + ' ' + str(sim))
         cur2.close()
 
     cur.close()
