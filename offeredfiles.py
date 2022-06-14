@@ -65,8 +65,8 @@ def recurse(con, basepath):
 
 con = initDB()
 
-recurse(con, '\\\\192.168.255.9\\incoming\\kimmo\\OpenShare\\canon60d\\20130331')
-
-recurse(con, '\\\\192.168.255.9\\incoming\\kimmo\\OpenShare\\canon60d\\20160228-dubai')
+#recurse(con, '\\\\192.168.255.9\\incoming\\kimmo\\OpenShare\\canon60d\\20130331')
+#recurse(con, '\\\\192.168.255.9\\incoming\\kimmo\\OpenShare\\canon60d\\20160228-dubai')
+recurse(con, '\\Users\\KimmoHakkarainen\\OneDrive - Exadeci Oy\\DCIM')
 
 con.close()

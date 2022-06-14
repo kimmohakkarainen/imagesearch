@@ -10,8 +10,14 @@ import pickle
 def initDB():
     try:
         con = mariadb.connect(user='index', password='index', host='192.168.255.9', database='index')
+        cur = con.cursor()
+        cur.execute(
+            'CREATE TABLE IF NOT EXISTS similar (id integer PRIMARY KEY AUTO_INCREMENT, distance FLOAT, fileid integer, offeredid integer, FOREIGN KEY(fileid) REFERENCES file(id), FOREIGN KEY(offeredid) REFERENCES file_offered(id))'
+        )
+        con.commit()
         con2 = mariadb.connect(user='index', password='index', host='192.168.255.9', database='index')
-        return con, con2
+        con3 = mariadb.connect(user='index', password='index', host='192.168.255.9', database='index')
+        return con, con2, con3
     except Exception as ex:
         print(ex)
 
@@ -22,7 +28,7 @@ def convert_array(text):
     return np.load(out,allow_pickle=False, encoding='bytes')
 
 
-def main(con, con2):
+def main(con, con2, con3):
 
     cur = con.cursor()
     cur.execute('SELECT file.id, file.path, file.name, vgg19.predict FROM file JOIN vgg19 ON file.id = vgg19.id ORDER BY file.path, file.name')
@@ -49,11 +55,15 @@ def main(con, con2):
             similarity = tf.keras.metrics.CosineSimilarity()(y_true=predict1,y_pred=predict2)
             sim = similarity.numpy()
             if sim > 0.5:
-                print(name + ' <=> ' + name2 + ' ' + str(sim))
+                #print(name + ' <=> ' + name2 + ' ' + str(sim))
+                cur3 = con3.cursor()
+                cur3.execute('INSERT IGNORE INTO similar(fileid, offeredid, distance) VALUES(?, ?, ?)',(id, id2, float(sim)))
+                con3.commit()
+                cur3.close()
         cur2.close()
 
     cur.close()
 
 
-con, con2 = initDB()
-main(con, con2)
+con, con2, con3 = initDB()
+main(con, con2, con3)
