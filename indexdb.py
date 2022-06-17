@@ -55,6 +55,17 @@ def insert_file(path, name, con, vgg_id=None):
     con.commit()
     cur.close
 
+def select_file(path, name, con):
+    cur = con.cursor()
+    cur.execute('SELECT id FROM i_file WHERE path = ? AND name = ?',(path,name))
+    row = cur.fetchone()
+    cur.close()
+    if row is None:
+        return row
+    else:
+        (id,) = row
+        return id
+
 
 def select_files_without_vgg19(con):
     cur = con.cursor()
@@ -64,15 +75,16 @@ def select_files_without_vgg19(con):
 
 def select_errors_for_migration(con):
     cur = con.cursor()
-    cur.execute('SELECT f.id, f.path, f.name, e.error FROM file f JOIN error e ON f.id = e.id')
+    #cur.execute('SELECT f.id, f.path, f.name, e.error FROM file f JOIN error e ON f.id = e.id')
+    cur.execute('SELECT f.id, f.path, f.name, f.error FROM file_offered f')
     return cur
 
 
 def select_vgg19s_for_migration(con):
     cur = con.cursor()
-    cur.execute('SELECT f.id, f.path, f.name, v.predict FROM file f JOIN vgg19 v ON f.id = v.id')
+    #cur.execute('SELECT f.id, f.path, f.name, v.predict FROM file f JOIN vgg19 v ON f.id = v.id')
+    cur.execute('SELECT f.id, f.path, f.name, f.predict FROM file_offered f ')
     return cur
-
 
 
 def select_close_vgg(d1, d2, d3, con):
@@ -230,17 +242,21 @@ def migrate_vgg19(con1, con2, con3):
         if not row1:
             break
         id, path, name, predict = row1
-        predict, d1, d2, d3 = calc_distance3(pickle.loads(predict))
-        close_vgg = select_close_vgg(d1, d2, d3,con2)
-        if close_vgg is None:
-            vgg_id = insert_vgg19(predict, d1, d2, d3, con2)
-        else:
-            vgg_id, predict2 = close_vgg
-            similarity = tf.keras.metrics.CosineSimilarity()(y_true=predict,y_pred=predict2)
-            sim = similarity.numpy()
-            if sim < 0.98:
+        if not select_file(path,name,con2):
+            predict, d1, d2, d3 = calc_distance3(pickle.loads(predict))
+            close_vgg = select_close_vgg(d1, d2, d3,con2)
+            if close_vgg is None:
                 vgg_id = insert_vgg19(predict, d1, d2, d3, con2)
-        insert_file(path, name, con2, vgg_id=vgg_id)
+            else:
+                vgg_id, predict2 = close_vgg
+                similarity = tf.keras.metrics.CosineSimilarity()(y_true=predict,y_pred=predict2)
+                sim = similarity.numpy()
+                if sim < 0.98:
+                    vgg_id = insert_vgg19(predict, d1, d2, d3, con2)
+            insert_file(path, name, con2, vgg_id=vgg_id)
+        else:
+            #print('File exists ' + path + '\\' + name)
+            pass
     cur1.close()
 
 
@@ -249,7 +265,7 @@ def migrate_vgg19(con1, con2, con3):
 '''
 
 def main(path, con1, con2, con3):
-    import_file_names(path, con1, con2, con3)
+    #import_file_names(path, con1, con2, con3)
     calculate_vgg19(con1, con2, con3)
 
 
@@ -260,6 +276,6 @@ def migrate(con1, con2, con3):
 
 
 con1, con2, con3 = initDB()
-migrate(con1, con2, con3)
+#migrate(con1, con2, con3)
 main('\\\\192.168.255.9\\tempimg\\DCIM', con1, con2, con3)
 
