@@ -209,10 +209,11 @@ def calculate_vgg19(con1, con2, con3):
         filepath = path + '\\' + name
         try:
             predict, d1, d2, d3 = vgg19_distance(filepath)
-            vgg_id, predict2 = select_close_vgg(d1, d2, d3,con2)
-            if vgg_id is None:
+            close_vgg = select_close_vgg(d1, d2, d3,con2)
+            if close_vgg is None:
                 vgg_id = insert_vgg19(predict, d1, d2, d3, con2)
             else:
+                vgg_id, predict2 = close_vgg
                 similarity = tf.keras.metrics.CosineSimilarity()(y_true=predict,y_pred=predict2)
                 sim = similarity.numpy()
                 if sim < 0.98:
@@ -265,7 +266,7 @@ def migrate_vgg19(con1, con2, con3):
 '''
 
 def main(path, con1, con2, con3):
-    #import_file_names(path, con1, con2, con3)
+    import_file_names(path, con1, con2, con3)
     calculate_vgg19(con1, con2, con3)
 
 
