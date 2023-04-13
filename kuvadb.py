@@ -43,7 +43,7 @@ def initDB():
             'FOREIGN KEY(id) REFERENCES i_file(id))'
         )
         con1.commit()
-        cur.close
+        cur.close()
 
         return con1, con2, con3
     except Exception as ex:
@@ -55,7 +55,7 @@ def insert_file(path, name, con, vgg_id=None):
     cur = con.cursor()
     cur.execute('INSERT IGNORE INTO i_file(path,name,vgg_id) VALUES(?,?,?)', (path, name, vgg_id))
     con.commit()
-    cur.close
+    cur.close()
 
 
 def select_file(path, name, con):

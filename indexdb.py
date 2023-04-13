@@ -1,5 +1,4 @@
 import os
-import re
 import mariadb
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -190,35 +189,14 @@ def vgg19_distance(filepath):
 '''
 
 '''
-_pattern = re.compile('^.*\\.([^\\.]?)$')
-_endings = {
-    'jpg',
-    'jpeg',
-    'mp4',
-    'aae',
-    'mov',
-    'png',
-    'gif',
-    'avi',
-    'wav'
-}
+
 
 def import_file_names(path, con1, con2, con3):
     for file in os.scandir(path):
         if file.is_dir():
             import_file_names(file.path, con1, con2, con3)
         else:
-            match = _pattern.match(file.name)
-            if match:
-                end = match.group(1).lower()
-                if end in _endings:
-                    insert_file(path,file.name,con1)
-                else:
-                    pass
-                    #print('skipped ' + file.name)
-            else:
-                pass
-                #print('skipped ' + file.name)
+            insert_file(path,file.name,con1)
 
 
 def calculate_vgg19(con1, con2, con3):
@@ -300,5 +278,5 @@ def migrate(con1, con2, con3):
 
 con1, con2, con3 = initDB()
 #migrate(con1, con2, con3)
-main('\\\\192.168.255.9\\images', con1, con2, con3)
+main('\\\\192.168.255.9\\tempimg\\DCIM', con1, con2, con3)
 
